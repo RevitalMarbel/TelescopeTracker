@@ -165,13 +165,13 @@ while cap.isOpened():
 
     frameCounter=frameCounter+1
     diff=2
-    if(frameCounter>5 ):
+    if(frameCounter>10 ):
         if(diffy<-3):
-            telescope.setAltitude(myElv+diff)
+            telescope.setAltitude((myElv+diff)/2)
             myElv=myElv+diff
             print("move up ",myElv)
         if(diffy> 3):
-            telescope.setAltitude(myElv - diff)
+            telescope.setAltitude((myElv - diff)/2)
             myElv = myElv - diff
             print("move down ", myElv)
         #time.sleep(1)
