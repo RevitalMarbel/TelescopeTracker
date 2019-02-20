@@ -13,5 +13,5 @@ import zwoasi as asi
 telescope=Telcontrol.Telcontrol()
 time.sleep(2)
 print("connected")
-#telescope.setAzimut(0.5)
-telescope.setAltitude(4)
+telescope.setAzimut(0.3)
+#telescope.setAltitude(4)

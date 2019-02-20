@@ -10,8 +10,8 @@ import Telcontrol
 import zwoasi as asi
 
 #ser = serial.Serial('COM3',9600)# need to check the com
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-#fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+#fourcc = cv2.VideoWriter_fourcc(*'XVID')
+fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 #set serial parameters
 # x = ser.is_open
 telescope=Telcontrol.Telcontrol()
@@ -62,7 +62,7 @@ def setElv(elv):
 
 #print(str(asi.list_cameras()))
 #out = cv2.VideoWriter('output1.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (200, 200))
-out = cv2.VideoWriter('output1.avi', fourcc, 20.0, (w, h))
+out = cv2.VideoWriter('output1'+str(time.time())+'.avi', fourcc, 20.0, (w, h))
 ok, image=cap.read()
 if not ok:
     print('Failed to read video')
@@ -164,27 +164,28 @@ while cap.isOpened():
     cv2.putText(image, "move y :" + str(diffy), (30, 50), 2, cv2.FONT_HERSHEY_PLAIN, (255, 0, 255), 1)
 
     frameCounter=frameCounter+1
-    diff=2
-    if(frameCounter>10 ):
+    diff=1
+    if(frameCounter%5==0 ):
         if(diffy<-3):
-            telescope.setAltitude((myElv+diff)/2)
+            telescope.setAltitude((myElv+diff))
             myElv=myElv+diff
             print("move up ",myElv)
         if(diffy> 3):
-            telescope.setAltitude((myElv - diff)/2)
+            telescope.setAltitude((myElv - diff))
             myElv = myElv - diff
             print("move down ", myElv)
         #time.sleep(1)
-        if(diffx<-3):
-            telescope.setAzimut(myAz -diff)
-            myAz =myAz - diff
+    if (frameCounter%31 ==0 ):
+        if(diffx<-5):
+            telescope.setAzimut(myAz -diff/5)
+            myAz =myAz - diff/50
             print("move left ", myAz)
-        if (diffx >3):
-            telescope.setAzimut(myAz+ diff)
-            myAz = myAz + diff
+        if (diffx >5):
+            telescope.setAzimut(myAz+ diff/5)
+            myAz = myAz + diff/50
             print("move right ", myAz)
         print(frameCounter, "frameCounter")
-        frameCounter=0
+        #frameCounter=0
 
     diffy=0
     diffx=0
