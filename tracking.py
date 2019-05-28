@@ -18,20 +18,31 @@ telescope=Telcontrol.Telcontrol()
 time.sleep(2)
 print("connected")
 #set frame parameters
-angToPix_x=10.6
-angToPix_y=8
-size_factor = 1
-cut_factor = 0.8
+angToPix_x=57.14
+angToPix_y=42.85
+telROIsize=0.63*angToPix_x
+
+#size_factor = 1
+#cut_factor = 0.8
 #image_size = (size_factor * 320, size_factor * 240)
-oldx = 0
-oldy = 0
-frameEdgex=150
-frameEdgey=150
+#oldx = 0
+#oldy = 0
+#frameEdgex=150
+#frameEdgey=150
 frameCounter=0
+
 # cap = cv2.VideoCapture('greyRSmall.mp4')
 #cap = cv2.VideoCapture('whiteBallon1.mp4')
 #cap = cv2.VideoCapture("satellite0.mp4")
-cap = cv2.VideoCapture(0)
+#cap = cv2.VideoCapture(0)
+
+#home
+#cap = cv2.VideoCapture('http://10.0.0.17:8080/video') #home
+#router
+cap=cv2.VideoCapture('http://192.168.8.144:8080/video')
+
+
+#cap = cv2.VideoCapture('http://192.168.100.115:8080/video')
 w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
 h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
 #detector = cv2.SimpleBlobDetector_create()
@@ -64,25 +75,42 @@ def setElv(elv):
 #out = cv2.VideoWriter('output1.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (200, 200))
 out = cv2.VideoWriter('output1'+str(time.time())+'.avi', fourcc, 20.0, (w, h))
 ok, image=cap.read()
+#width = len(image[0])
+#length = len(image)
+height, width = image.shape[:2]
+cy= int(height/2)
+cx=int(width/2)
+hx=600
+hy=300
+image = image[cy - hy:cy + hy, cx - hx:cx + hx]
+n_height, n_width = image.shape[:2]
+n_cy= int(n_height/2)
+n_cx=int(n_width/2)
+
 if not ok:
     print('Failed to read video')
     exit()
 bbox = cv2.selectROI("tracking", image)
-tracker = cv2.TrackerMIL_create()
+#tracker = cv2.TrackerMIL_create()
+#tracker = cv2.TrackerBoosting_create()
+tracker = cv2.TrackerCSRT_create()
+
 init_once = False
-width = len(image[0])
-length = len(image)
-cx = width / 2
-cy = length / 2
+
+#cx = int(width / 2)
+#cy = int(length / 2)
 dx=0
 dy=0
-
+telROIsize=(int)(telROIsize)
+cv2.rectangle(image, (n_cy - telROIsize, n_cy - telROIsize), (n_cy + telROIsize, n_cy + telROIsize), (0, 0, 0), 5)
 def dist(new, old):
     res = new - old
     return res
 
 while cap.isOpened():
     ok, image=cap.read()
+    image = image[cy - hy:cy + hy, cx - hx:cx + hx]
+    #image = image[40:length - 130, 130:width - 130]
     if not ok:
         print('Failed to read video')
         exit()
@@ -93,24 +121,26 @@ while cap.isOpened():
 
     if not init_once:
         ok = tracker.init(image, bbox)
+        #image = image[cy - hy:cy + hy, cx - hx:cx + hx]
         init_once = True
-
+    #image = image[40:length - 130, 130:width - 130]
     ok, newbox = tracker.update(image)
     print(ok, newbox)
 
     if ok:
         p1 = (int(newbox[0]), int(newbox[1]))
         p2 = (int(newbox[0] + newbox[2]), int(newbox[1] + newbox[3]))
-        sat_center_x= (p1[0] + p2[0]) / 2
-        sat_center_y = (p1[1] + p2[1]) / 2
+        sat_center_x= int((p1[0] + p2[0]) / 2)
+        sat_center_y = int((p1[1] + p2[1]) / 2)
         cv2.rectangle(image, p1, p2, (200, 0, 0))
-        cv2.circle(image, (int(cx), int(cy)), 3, (0, 200, 0))
+        cv2.rectangle(image, (n_cx - 2, n_cy - 2), (n_cx + 2, n_cy + 2), (0, 0, 0),5)
+        cv2.circle(image, (int(n_cx), int(n_cy)), 3, (0, 200, 0))
 
         #if (sat_center_x > 100 and sat_center_x < width - 100 and sat_center_y > 100 and sat_center_y < length - 100):
         bx = sat_center_x
         by = sat_center_y
         dx=bx-cx
-        dy=by-cy
+        dy=cy-by
         #dx = dist(bx, cx)
         #dy = dist(by, cy)
         #distance from center
@@ -121,7 +151,7 @@ while cap.isOpened():
 
 
 
-        cv2.line(image, (int(cx),int(cy)),(int(bx),int(by)) ,(0, 200, 0),3 )
+        cv2.line(image, (int(n_cx),int(n_cy)),(int(bx),int(by)) ,(0, 200, 0),3 )
 
     #print(width, length)
     #image_size = (int(cut_factor * width),int( cut_factor * length))
@@ -145,7 +175,7 @@ while cap.isOpened():
 
 
     # Display the resulting frame
-    print("with","length", width,length)
+#    print("with","length", width,length)
     # cv2.circle(frame, (bx, by), 3, (255, 0, 0), -1)
     # cv2.circle(frame, (cx, cy), 3, (255, 255, 0), -1)
     # cv2.putText(frame, "move x :" + str(dist(x, oldx)), (30, 30), 2, cv2.FONT_HERSHEY_PLAIN, (255, 0, 255), 1)
@@ -156,33 +186,38 @@ while cap.isOpened():
     #diffy=(dist(sat_center_y, oldy))
 
     #refactor by camera angle /pixel ratip
-    diffx=dx/angToPix_x
-    diffy=dy/angToPix_y
+    diffx=(dx/angToPix_x)/10
+    diffy=(dy/angToPix_y)/10
     #telescope.setCorrection(diffx, diffy)
-    print("diffx", diffx, "diffy" ,diffy)
+
     cv2.putText(image, "move x :" + str(diffx), (30, 30), 2, cv2.FONT_HERSHEY_PLAIN, (255, 0, 255), 1)
     cv2.putText(image, "move y :" + str(diffy), (30, 50), 2, cv2.FONT_HERSHEY_PLAIN, (255, 0, 255), 1)
-
+    #0.6 is the telescope fov- so i set the bound to 0.5
     frameCounter=frameCounter+1
-    diff=1
-    if(frameCounter%5==0 ):
-        if(diffy<-3):
-            telescope.setAltitude((myElv+diff))
-            myElv=myElv+diff
+    #diff=0.05
+    if(frameCounter%60==0 ):
+        print("diffx", diffx, "diffy", diffy)
+        if(diffy>0.5):
+            telescope.setAltitude((myElv+diffy))
+            #myElv=myElv+diffy
+            setElv(myElv+diffy)
             print("move up ",myElv)
-        if(diffy> 3):
-            telescope.setAltitude((myElv - diff))
-            myElv = myElv - diff
+        if(diffy< -0.5):
+            telescope.setAltitude((myElv - diffy))
+            #myElv = myElv - diffy
+            setElv(myElv - diffy)
             print("move down ", myElv)
         #time.sleep(1)
-    if (frameCounter%31 ==0 ):
-        if(diffx<-5):
-            telescope.setAzimut(myAz -diff/5)
-            myAz =myAz - diff/50
+    if (frameCounter%61 ==0 ):
+        if(diffx<0.5):
+            telescope.setAzimut(myAz -diffx)
+            #myAz =myAz - diffx/50
+            setAz(myAz - diffx)
             print("move left ", myAz)
-        if (diffx >5):
-            telescope.setAzimut(myAz+ diff/5)
-            myAz = myAz + diff/50
+        if (diffx >0.5):
+            telescope.setAzimut(myAz+ diffx)
+            #myAz = myAz + diffx/50
+            setAz(myAz + diffx )
             print("move right ", myAz)
         print(frameCounter, "frameCounter")
         #frameCounter=0
@@ -192,8 +227,9 @@ while cap.isOpened():
     # time.sleep(0.2)
     #cv2.imshow('frame', image)
     #cv2.imshow('gray', image)
+
     cv2.imshow("tracking", image)
-    out.write(image)
+    #out.write(image)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         telescope.stopTelescope()
         telescope.disconnect()

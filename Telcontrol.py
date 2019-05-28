@@ -8,7 +8,7 @@ two_inTwentyFour=16777216
 
 class Telcontrol(tr.Thread):
 #everythin in degrees
-    def __init__(self,port="COM12", baudrate="9600", maxdx=0.1, maxdy=0.1,myElv=0, myAz=0):
+    def __init__(self,port="COM14", baudrate="9600", maxdx=0.1, maxdy=0.1,myElv=0, myAz=0):
         tr.Thread.__init__(self);
         self.ser = serial.Serial(port, baudrate)  # need to check the com
         # x = ser.is_open

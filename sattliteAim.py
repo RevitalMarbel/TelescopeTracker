@@ -79,7 +79,7 @@ while cap.isOpened():
         dx=bx-cx
         dy=by-cy
         #dx = dist(bx, cx)
-        #dy = dist(by, cy)
+        #dy = dist(by, cy)  ;;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          ,
         #distance from center
 #        d = math.sqrt(dx ** 2 + dy ** 2)q
         # if d < 50:
