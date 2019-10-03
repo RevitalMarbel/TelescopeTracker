@@ -8,7 +8,7 @@ two_inTwentyFour=16777216
 
 class Telcontrol(tr.Thread):
 #everythin in degrees
-    def __init__(self,port="COM14", baudrate="9600", maxdx=0.2, maxdy=0.2,myElv=0, myAz=0):
+    def __init__(self,port="COM14", baudrate="9600", maxdx=0.1, maxdy=0.1,myElv=0, myAz=0):
         tr.Thread.__init__(self);
         self.ser = serial.Serial(port, baudrate)  # need to check the com
         # x = ser.is_open
@@ -78,15 +78,22 @@ class Telcontrol(tr.Thread):
             self.ser.close()
 
     def initProtocol(self):
-        self.midLeft = chr(80) + chr(2) + chr(16) + chr(36) + chr(6) + chr(142) + chr(56) + chr(0)  # go left slow speed
-        self.midRight = chr(80) + chr(2) + chr(16) + chr(36) + chr(6) + chr(142) + chr(56) + chr(0)  # going right at speed of 4
-        self.stop_rl = chr(80) + chr(2) + chr(16) + chr(36) + chr(0) + chr(0) + chr(0) + chr(0)  # Stop
+        # self.goRight_9 = (b':K1\r=\r:f1\r=103\r:f1\r=103\r:G130\r=\r:I1200000\r=\r:J1\r=\r')
+        # self.goLeft_9 = (b':K1\r=\r:f1\r=303\r:f1\r=303\r:G131\r=\r:I1200000\r=\r:J1\r=\r')
+        # self.goUp = (b':K2\r=\r:f2\r=103\r:f2\r=103\r:G230\r=\r:I2200000\r=\r:J2\r=\r')
+        # self.goDown = (b':K2\r=\r:f2\r=303\r:f2\r=303\r:G231\r=\r:I2200000\r=\r:J2\r=\r')
 
-        command3 = chr(80) + chr(2) + chr(16) + chr(37) + chr(7) + chr(142) + chr(56) + chr(0)  # left (reset)
-        self.midUp = chr(80) + chr(2) + chr(17) + chr(36) + chr(6) + chr(142) + chr(56) + chr(0)  # up
-        self.midDown = chr(80) + chr(2) + chr(17) + chr(37) + chr(6) + chr(142) + chr(56) + chr(0)  # down
-        self.Stop_ud = chr(80) + chr(2) + chr(17) + chr(37) + chr(0) + chr(0) + chr(0) + chr(0)  # stop
+        self.goRight_9 = (b':K1\r=\r:f1\r=103\r:f1\r=103\r:G130\r=\r:I1200000\r=\r:J1\r=\r')
+        self.goLeft_9 = (b':K1\r=\r:f1\r=303\r:f1\r=303\r:G131\r=\r:I1200000\r=\r:J1\r=\r')
+        self.goUp = (b':K2\r=\r:f2\r=103\r:f2\r=103\r:G230\r=\r:I2200000\r=\r:J2\r=\r')
+        self.goDown = (b':K2\r=\r:f2\r=303\r:f2\r=303\r:G231\r=\r:I2200000\r=\r:J2\r=\r')
 
+
+        #self.goRight_9 = (b':K1\r=\r:f1\r=103\r:f1\r=103\r:G130\r=\r:I10C0000\r=\r:J1\r=\r')
+        #self.goLeft_9 = (b':K1\r=\r:f1\r=303\r:f1\r=303\r:G131\r=\r:I10C0000\r=\r:J1\r=\r')
+        #self.goDown = (b':K2\r=\r:f2\r=303\r:f2\r=303\r:G231\r=\r:I1190000\r=\r:J2\r=\r')
+        #self.goUp =(b':K2\r=\r:f2\r=103\r:f2\r=103\r:G230\r=\r:I1320000\r=\r:J2\r=\r')        #self.goUp = (b':K2\r=\r:f2\r=103\r:f2\r=103\r:G230\r=\r:I2200000\r=\r:J2\r=\r')
+        #self.goDown = (b':K2\r=\r:f2\r=303\r:f2\r=303\r:G231\r=\r:I2200000\r=\r:J2\r=\r')
         self.StopX = (b':K1\r=\r')
         self.StopY = (b':K2\r=\r')
         self.ImmidiateStop= (b'4c0a\r')
@@ -123,40 +130,27 @@ class Telcontrol(tr.Thread):
             self.whileLock.release()
         print("my elv",self.myElv ,"my az",  self.myAz)
 
-    def correct(self, rl=0, ud=0):#  right + left - up+ down -
+    def correct(self):
         print("correct")
         #print(math.fabs(self.diffaz), "fabs")
-        if( rl>self.maxdx):
-
-            self.ser.write(self.midRight.encode())
-            #time.sleep(5)
-            self.ser.write(self.stop_rl.encode())
-            #self.ser.write(self.stop_rl.encode())
+        if ( self.diffaz>0):
+            self.setAzimut(self.oldx-0.1)
+            self.diffaz=0
             print(" move right ", self.myAz)
-        if (rl < -self.maxdx):s
-
-            self.ser.write(self.midLeft.encode())
-            #time.sleep(5)
-            self.ser.write(self.stop_rl.encode())
-            #self.ser.write(self.stop_rl.encode())
+        if (self.diffaz < 0):
+            self.setAzimut(self.oldx +0.1)
+            self.diffaz = 0
             print(" move left ",self.myAz)
-        if (ud > self.maxdy):
-
-            self.ser.write(self.midUp.encode())
-            #time.sleep(5)
-            #self.ser.write(self.Stop_ud.encode())
+            #time.sleep(0.1)
+        if (self.diffelv > 0):
+            self.setAltitude(self.oldy+0.1)
+            self.diffelv = 0
             print(" move up ", self.myAz)
-        if (ud < -self.maxdy):
-
-            self.ser.write(self.midDown.encode())
-            #time.sleep(5)
-
-            #self.ser.write(self.Stop_ud.encode())
+        if (self.diffelv < 0):
+            self.setAltitude(self.oldy - 0.1)
+            self.diffelv = 0
             print(" move down  ", self.myAz)
-        if(ud > -self.maxdy  or ud < self.maxdy ):
-            self.ser.write(self.Stop_ud.encode())
-        if (rl > -self.maxdx or rl< self.maxdx):
-            self.ser.write(self.Stop_ud.encode())
+
 
             #time.sleep(0.1)
         #time.sleep(math.abs(self.dy / self.maxdy))

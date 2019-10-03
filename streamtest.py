@@ -1,10 +1,12 @@
 import cv2
 #home
 
-#stream = cv2.VideoCapture('http://10.0.0.17:8080/video')
+#stream = cv2.VideoCapture('http://10.2.0.248:8080/video')
 #router
-stream = cv2.VideoCapture('http://192.168.8.144:8080/video')
-#stream = cv2.VideoCapture('http://192.168.0.101:8080/video')
+#stream = cv2.VideoCapture('http://192.168.8.144:8080/video')
+
+#KCG
+stream = cv2.VideoCapture('http://192.168.100.109:8080/video')
 
 # Use the next line if your camera has a username and password
 # stream = cv2.VideoCapture('protocol://username:password@IP:port/1')

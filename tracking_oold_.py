@@ -32,10 +32,10 @@ frameCounter=0
 #home
 #cap = cv2.VideoCapture('http://10.0.0.17:8080/video') #home
 #router
-#cap=cv2.VideoCapture('http://192.168.8.144:8080/video')
+cap=cv2.VideoCapture('http://192.168.8.144:8080/video')
 
 #KCG
-cap = cv2.VideoCapture('http://192.168.8.215:8080/video')
+#cap = cv2.VideoCapture('http://192.168.8.215:8080/video')
 
 #cap = cv2.VideoCapture('http://192.168.100.115:8080/video')
 w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
@@ -181,8 +181,8 @@ while cap.isOpened():
     #diffy=(dist(sat_center_y, oldy))
 
     #refactor by camera angle /pixel ratip
-    diffx=(dx/angToPix_x)/10
-    diffy=(dy/angToPix_y)/10
+    diffx=(dx/angToPix_x)/10000
+    diffy=(dy/angToPix_y)/10000
     #telescope.setCorrection(diffx, diffy)
 
     cv2.putText(image, "move x :" + str(diffx), (30, 30), 2, cv2.FONT_HERSHEY_PLAIN, (255, 0, 255), 1)
@@ -190,9 +190,33 @@ while cap.isOpened():
     #0.6 is the telescope fov- so i set the bound to 0.5
     frameCounter=frameCounter+1
     #diff=0.05
+    if(frameCounter%60==0 ):
+        print("diffx", diffx, "diffy", diffy)
+        if(diffy>0.5):
+            telescope.setAltitude((myElv+diffy))
+            #myElv=myElv+diffy
+            setElv(myElv+diffy)
+            print("move up ",myElv)
+        if(diffy< -0.5):
+            telescope.setAltitude((myElv - diffy))
+            #myElv = myElv - diffy
+            setElv(myElv - diffy)
+            print("move down ", myElv)
+        #time.sleep(1)
+    if (frameCounter%61 ==0 ):
+        if(diffx>0.5):
+            telescope.setAzimut(myAz -diffx)
+            #myAz =myAz - diffx/50
+            setAz(myAz - diffx)
+            print("move left ", myAz)
+        if (diffx <0.5):
+            telescope.setAzimut(myAz+ diffx)
+            #myAz = myAz + diffx/50
+            setAz(myAz + diffx )
+            print("move right ", myAz)
+        print(frameCounter, "frameCounter")
+        #frameCounter=0
 
-    if(frameCounter%50==0 ):
-        telescope.correct(rl=diffx, ud=diffy)
     diffy=0
     diffx=0
     # time.sleep(0.2)
