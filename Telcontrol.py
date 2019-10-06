@@ -8,15 +8,15 @@ two_inTwentyFour=16777216
 
 class Telcontrol(tr.Thread):
 #everythin in degrees
-    def __init__(self,port="COM14", baudrate="9600", maxdx=0.2, maxdy=0.2,myElv=0, myAz=0):
+    def __init__(self,port="COM14", baudrate="9600", mindx=10, mindy=10,maxdx=1000, maxdy=1000):
         tr.Thread.__init__(self);
         self.ser = serial.Serial(port, baudrate)  # need to check the com
         # x = ser.is_open
         self.initProtocol()
-        self.maxdx=maxdx
+        self.mindx=mindx
+        self.mindy=mindy
         self.maxdy=maxdy
-        self.myElv=myElv
-        self.myAz=myAz
+        self.maxdx=maxdx
         self.isReady=True
         self.whileLock = tr.Semaphore(value=0)
         self.readyLock = tr.Lock()
@@ -78,14 +78,16 @@ class Telcontrol(tr.Thread):
             self.ser.close()
 
     def initProtocol(self):
-        self.midLeft = chr(80) + chr(2) + chr(16) + chr(36) + chr(6) + chr(142) + chr(56) + chr(0)  # go left slow speed
+        self.midLeft = chr(80) + chr(2) + chr(16) + chr(37) + chr(6) + chr(142) + chr(56) + chr(0)  # go left slow speed
         self.midRight = chr(80) + chr(2) + chr(16) + chr(36) + chr(6) + chr(142) + chr(56) + chr(0)  # going right at speed of 4
-        self.stop_rl = chr(80) + chr(2) + chr(16) + chr(36) + chr(0) + chr(0) + chr(0) + chr(0)  # Stop
+        self.stop_r = chr(80) + chr(2) + chr(16) + chr(36) + chr(0) + chr(0) + chr(0) + chr(0)  # Stop
+        self.stop_l = chr(80) + chr(2) + chr(16) + chr(37) + chr(0) + chr(0) + chr(0) + chr(0)
 
-        command3 = chr(80) + chr(2) + chr(16) + chr(37) + chr(7) + chr(142) + chr(56) + chr(0)  # left (reset)
+        #command3 = chr(80) + chr(2) + chr(16) + chr(37) + chr(7) + chr(142) + chr(56) + chr(0)  # left (reset)
         self.midUp = chr(80) + chr(2) + chr(17) + chr(36) + chr(6) + chr(142) + chr(56) + chr(0)  # up
         self.midDown = chr(80) + chr(2) + chr(17) + chr(37) + chr(6) + chr(142) + chr(56) + chr(0)  # down
-        self.Stop_ud = chr(80) + chr(2) + chr(17) + chr(37) + chr(0) + chr(0) + chr(0) + chr(0)  # stop
+        self.Stop_d = chr(80) + chr(2) + chr(17) + chr(37) + chr(0) + chr(0) + chr(0) + chr(0)  # stop
+        self.Stop_u = chr(80) + chr(2) + chr(17) + chr(36) + chr(0) + chr(0) + chr(0) + chr(0)
 
         self.StopX = (b':K1\r=\r')
         self.StopY = (b':K2\r=\r')
@@ -123,44 +125,66 @@ class Telcontrol(tr.Thread):
             self.whileLock.release()
         print("my elv",self.myElv ,"my az",  self.myAz)
 
-    def correct(self, rl=0, ud=0):#  right + left - up+ down -
-        print("correct")
+    def correct_x(self, rl=0, isStop=0):#  right + left - up+ down -
+        print("correct_x")
         #print(math.fabs(self.diffaz), "fabs")
-        if( rl>self.maxdx):
+        if( rl>self.mindx):
 
             self.ser.write(self.midRight.encode())
             #time.sleep(5)
-            self.ser.write(self.stop_rl.encode())
             #self.ser.write(self.stop_rl.encode())
-            print(" move right ", self.myAz)
-        if (rl < -self.maxdx):s
+            #self.ser.write(self.stop_rl.encode())
+            print(" move right ", rl)
+        if (rl <-self.mindx):
 
             self.ser.write(self.midLeft.encode())
             #time.sleep(5)
-            self.ser.write(self.stop_rl.encode())
             #self.ser.write(self.stop_rl.encode())
-            print(" move left ",self.myAz)
-        if (ud > self.maxdy):
+            #self.ser.write(self.stop_rl.encode())
+            print(" move left ",rl)
+
+
+        if (math.fabs(rl)> self.maxdx or math.fabs(rl)< self.mindx or isStop==1):
+            self.ser.write(self.stop_r.encode())
+            self.ser.write(self.stop_l.encode())
+            print("stop x")
+
+            #time.sleep(0.1)
+        #time.sleep(math.abs(self.dy / self.maxdy))
+        #print("up down")
+    def correct_y(self, ud=0, isStop=0):#  right + left - up+ down -
+        print("correct_y")
+        #print(math.fabs(self.diffaz), "fabs")
+
+        if (ud > self.mindy):
 
             self.ser.write(self.midUp.encode())
             #time.sleep(5)
             #self.ser.write(self.Stop_ud.encode())
-            print(" move up ", self.myAz)
-        if (ud < -self.maxdy):
+            print(" move up ", ud)
+        if (ud <- self.mindy):
 
             self.ser.write(self.midDown.encode())
             #time.sleep(5)
 
             #self.ser.write(self.Stop_ud.encode())
-            print(" move down  ", self.myAz)
-        if(ud > -self.maxdy  or ud < self.maxdy ):
-            self.ser.write(self.Stop_ud.encode())
-        if (rl > -self.maxdx or rl< self.maxdx):
-            self.ser.write(self.Stop_ud.encode())
+            print(" move down  ", ud)
+        if(math.fabs(ud)> self.maxdy or math.fabs(ud)< self.mindy or isStop==1):
+            self.ser.write(self.Stop_d.encode())
+            self.ser.write(self.Stop_u.encode())
+            print("stop y")
+    def stop_x(self):
+        self.ser.write(self.stop_r.encode())
+        self.ser.write(self.stop_l.encode())
+
+    def stop_y(self):
+        self.ser.write(self.Stop_d.encode())
+        self.ser.write(self.Stop_u.encode())
 
             #time.sleep(0.1)
         #time.sleep(math.abs(self.dy / self.maxdy))
         #print("up down")
+
 
 
     # def correct(self):

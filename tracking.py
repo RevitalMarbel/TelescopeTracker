@@ -11,7 +11,8 @@ import zwoasi as asi
 
 #ser = serial.Serial('COM3',9600)# need to check the com
 #fourcc = cv2.VideoWriter_fourcc(*'XVID')
-fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+#fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+fourcc = cv2.VideoWriter_fourcc(*'DIVX')
 #set serial parameters
 # x = ser.is_open
 telescope=Telcontrol.Telcontrol()
@@ -41,7 +42,7 @@ cap = cv2.VideoCapture('http://192.168.8.215:8080/video')
 w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
 h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
 #detector = cv2.SimpleBlobDetector_create()
-
+out = cv2.VideoWriter('C:/Users/boaz/PycharmProjects/BallonTracker/3_10_19.avi', fourcc, 10, (w, h))
 bx = -1
 by = -1
 
@@ -68,7 +69,7 @@ def setElv(elv):
 
 #print(str(asi.list_cameras()))
 #out = cv2.VideoWriter('output1.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (200, 200))
-out = cv2.VideoWriter('output1'+str(time.time())+'.avi', fourcc, 20.0, (w, h))
+#out = cv2.VideoWriter('output1'+str(time.time())+'.avi', fourcc, 20.0, (w, h))
 ok, image=cap.read()
 #width = len(image[0])
 #length = len(image)
@@ -135,7 +136,7 @@ while cap.isOpened():
         bx = sat_center_x
         by = sat_center_y
         dx=bx-cx
-        dy=cy-by
+        dy=cy+by
         #dx = dist(bx, cx)
         #dy = dist(by, cy)
         #distance from center
@@ -181,8 +182,10 @@ while cap.isOpened():
     #diffy=(dist(sat_center_y, oldy))
 
     #refactor by camera angle /pixel ratip
-    diffx=(dx/angToPix_x)/10
-    diffy=(dy/angToPix_y)/10
+    # diffx=(dx/angToPix_x)/10
+    # diffy=(dy/angToPix_y)/10
+    diffx = bx-n_cx
+    diffy = -(by-n_cy)
     #telescope.setCorrection(diffx, diffy)
 
     cv2.putText(image, "move x :" + str(diffx), (30, 30), 2, cv2.FONT_HERSHEY_PLAIN, (255, 0, 255), 1)
@@ -192,7 +195,16 @@ while cap.isOpened():
     #diff=0.05
 
     if(frameCounter%50==0 ):
-        telescope.correct(rl=diffx, ud=diffy)
+        telescope.correct_x(rl=diffx, isStop=0)
+
+    if frameCounter %50== 10:
+            telescope.correct_y(ud=diffy, isStop=0)
+    if (frameCounter % 50 == 30):
+            telescope.stop_x()
+    if (frameCounter % 50 == 40):
+            telescope.stop_y()
+            print("Stop")
+
     diffy=0
     diffx=0
     # time.sleep(0.2)
@@ -200,10 +212,13 @@ while cap.isOpened():
     #cv2.imshow('gray', image)
 
     cv2.imshow("tracking", image)
-    #out.write(image)
+    out.write(image)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         telescope.stopTelescope()
         telescope.disconnect()
+        out.release()
+        cap.release()
+        cv2.destroyAllWindows()
         break
 cv2.destroyAllWindows()
 out.release()
