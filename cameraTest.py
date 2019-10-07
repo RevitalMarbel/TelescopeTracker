@@ -4,8 +4,8 @@ import urllib
 #telescope=Telcontrol.Telcontrol()
 import cv2
 #cam = "mms://194.90.203.111/cam2"
-cam = 'http://192.168.8.215:8080/video'
-#cam = 0 # Use  local webcam.
+#cam = 'http://192.168.8.215:8080/video'
+cam = 1 # Use  local webcam.
 
 cap = cv2.VideoCapture(cam)
 #cap = cv2.VideoCapture(0)

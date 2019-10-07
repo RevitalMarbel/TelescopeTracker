@@ -36,8 +36,8 @@ frameCounter=0
 #cap=cv2.VideoCapture('http://192.168.8.144:8080/video')
 
 #KCG
-cap = cv2.VideoCapture('http://192.168.8.215:8080/video')
-
+#cap = cv2.VideoCapture('http://192.168.8.215:8080/video')
+cap = cv2.VideoCapture(1)
 #cap = cv2.VideoCapture('http://192.168.100.115:8080/video')
 w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
 h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
